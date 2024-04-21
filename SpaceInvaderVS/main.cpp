@@ -8,11 +8,14 @@
 #include "RenderWindow.hpp"
 #include "Entity.hpp"
 #include "Math.hpp"
+#include "Utils.hpp"
 #include "Text.hpp"
+
+#define DIGITS_IN_SCORE 5
 
 int main(int argc, char* argv[])
 {
-	const int FPS = 60;
+	const int FPS = 120;
 	const int frameDelay = 1000 / FPS;
 
 	Uint32 frameStart;
@@ -47,11 +50,10 @@ int main(int argc, char* argv[])
 		Entity(Vector2f(72, 560), playerTexture, Vector2f(52, 32)),
 	};
 
-	Entity player(Vector2f(180, 500), playerTexture, Vector2f(52, 32));
+	Player player(Vector2f(20, 500), playerTexture, Vector2f(52, 32));
 
-	int score = 0;
-	std::string scorePrefix = "SCORE: ";
-	Text scoreText(window.getRenderer(), "res/fonts/space_invaders.ttf", 30, "SCORE: 0000", { 0, 0, 255, 255 });
+	int displayScore = -1, currentScore = 0;
+	Text *scoreText = new Text(window.getRenderer(), "res/fonts/space_invaders.ttf", 30, getScoreString(currentScore, DIGITS_IN_SCORE), {0, 0, 255, 255});
 
 	bool gameRunning = true;
 	SDL_Event event;
@@ -60,8 +62,22 @@ int main(int argc, char* argv[])
 		frameStart = SDL_GetTicks();
 
 		while (SDL_PollEvent(&event)) {
-			if (event.type == SDL_QUIT) {
+			switch (event.type) {
+			case SDL_QUIT:
 				gameRunning = false;
+				break;
+			case SDL_KEYDOWN:
+				switch (event.key.keysym.sym) {
+				case SDLK_LEFT:
+					player.moveX(-10);
+					break;
+				case SDLK_RIGHT:
+					player.moveX(10);
+					break;
+				default:
+					break;
+				}
+				break;
 			}
 		}
 
@@ -80,7 +96,12 @@ int main(int argc, char* argv[])
 		window.render(player);
 
 		// UI
-		scoreText.display(window.getRenderer(), 10, 10);
+		if (displayScore != currentScore) {
+			delete scoreText;
+			scoreText = new Text(window.getRenderer(), "res/fonts/space_invaders.ttf", 30, getScoreString(currentScore, DIGITS_IN_SCORE), { 0, 0, 255, 255 });
+			displayScore = currentScore;
+		}
+		scoreText->display(window.getRenderer(), 10, 10);
 		window.renderUI();
 
 		// Display

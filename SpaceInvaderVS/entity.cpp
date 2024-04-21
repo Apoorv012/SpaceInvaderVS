@@ -28,3 +28,18 @@ SDL_Rect Entity::getCurrentFrame()
 	return currentFrame;
 }
 
+Player::Player(Vector2f p_pos, SDL_Texture* p_tex, Vector2f p_dim)
+	: Entity(p_pos, p_tex, p_dim) {}
+
+void Player::moveX(int x)
+{
+	pos.x += x;
+
+	if (pos.x < 20) {
+		pos.x -= x;
+	}
+	if (pos.x > 730) {
+		pos.x -= x;
+	}
+	
+}
