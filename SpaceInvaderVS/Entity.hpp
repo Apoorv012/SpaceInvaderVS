@@ -1,6 +1,7 @@
 #pragma once
 #include <SDL.h>
 #include <SDL_image.h>
+#include <vector>
 
 #include "Math.hpp"
 #include "Text.hpp"
@@ -27,7 +28,8 @@ class Bullet : public Entity {
 public:
 	Bullet(Vector2f p_pos, SDL_Texture* p_tex, Vector2f p_dim, int speed, Player* player);
 	SDL_Rect* getRectPtr();
-	void update();
+	void update(std::vector<Bullet*>* enemyBullets);
+	void display(SDL_Renderer* renderer, SDL_Texture* _texture);
 };
 
 class Player : public Entity
@@ -54,4 +56,10 @@ public:
 	void loseHealth();
 	int getHealth();
 	void showHealth();
+};
+
+class Enemy : public Entity {
+public:
+	Enemy(Vector2f p_pos, SDL_Texture* p_tex, Vector2f p_dim);
+	void shoot(std::vector<Bullet*>& bullets, SDL_Texture* bulletTexture);
 };

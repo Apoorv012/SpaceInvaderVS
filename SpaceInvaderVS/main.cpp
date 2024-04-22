@@ -13,7 +13,7 @@
 
 const int DIGITS_IN_SCORE = 5;
 
-bool checkCollision(Bullet* bullet, Player& player, int& score, std::vector<Bunker>& bunkers, std::vector<Entity>& lowerLevel, std::vector<Entity>& midLevel, std::vector<Entity>& upperLevel) {
+bool checkCollision(Bullet* bullet, Player& player, int& score, std::vector<Bunker>& bunkers, std::vector<Enemy>& lowerLevel, std::vector<Enemy>& midLevel, std::vector<Enemy>& upperLevel) {
 	for (size_t i = 0; i < bunkers.size(); ++i) {
 		if (intersect(bullet->getRect(), bunkers[i].getRect())) {
 			std::cout << "Bunker " << i << " hit" << std::endl;
@@ -53,6 +53,25 @@ bool checkCollision(Bullet* bullet, Player& player, int& score, std::vector<Bunk
 			player.clearBullet();
 			upperLevel.erase(upperLevel.begin() + i);
 			score += 100;
+			return true;
+		}
+	}
+
+	return false;
+}
+
+bool checkEnemyBulletCollision(Bullet* bullet, std::vector<Bunker>& bunkers, Player& player, std::vector<Bullet*>& enemyBullets, int index) {
+	for (size_t i = 0; i < bunkers.size(); i++) {
+		if (intersect(bullet->getRect(), bunkers[i].getRect())) {
+			std::cout << "Bunker " << i << " hit" << std::endl;
+			bunkers[i].loseHealth();
+
+			if (bunkers[i].getHealth() <= 0) {
+				bunkers.erase(bunkers.begin() + i);
+			}
+
+			enemyBullets.erase(enemyBullets.begin() + index);
+			delete bullet;
 			return true;
 		}
 	}
@@ -102,12 +121,14 @@ int main(int argc, char* argv[])
 		Entity(Vector2f(72, 560), playerTexture, Vector2f(52, 32)),
 	};
 
-	std::vector<Entity> enemyLayerTop, enemyLayerMid, enemyLayerBottom;
+	std::vector<Enemy> enemyLayerTop, enemyLayerMid, enemyLayerBottom;
 	for (int i = 0; i < 8; i++) {
-		enemyLayerTop.push_back(Entity(Vector2f(114 + i * 76, 120), enemyTexture_1, Vector2f(32, 32)));
-		enemyLayerMid.push_back(Entity(Vector2f(128 + i * 71, 180), enemyTexture_2, Vector2f(44, 32)));
-		enemyLayerBottom.push_back(Entity(Vector2f(114 + i * 75, 240), enemyTexture_3, Vector2f(48, 32)));
+		enemyLayerTop.push_back(Enemy(Vector2f(114 + i * 76, 120), enemyTexture_1, Vector2f(32, 32)));
+		enemyLayerMid.push_back(Enemy(Vector2f(128 + i * 71, 180), enemyTexture_2, Vector2f(44, 32)));
+		enemyLayerBottom.push_back(Enemy(Vector2f(114 + i * 75, 240), enemyTexture_3, Vector2f(48, 32)));
 	}
+
+	std::vector<Bullet*> enemyBullets;
 
 	Player player(Vector2f(20, 500), playerTexture, Vector2f(52, 32));
 
@@ -137,6 +158,9 @@ int main(int argc, char* argv[])
 					break;
 				case SDLK_SPACE:
 					player.shoot();
+					break;
+				case SDLK_x:
+					enemyLayerBottom[0].shoot(enemyBullets, bulletTexture);
 				default:
 					break;
 				}
@@ -171,13 +195,22 @@ int main(int argc, char* argv[])
 		if (player.getBullet()) {
 			player.displayBullet(window.getRenderer(), bulletTexture);
 		}
+		for (auto el : enemyBullets) {
+			el->display(window.getRenderer(), bulletTexture);
+		}
 
 		// Update
 		player.update();
+		for (auto el : enemyBullets) {
+			el->update(&enemyBullets);
+		}
 
 		// Check Collision
 		if (player.getBullet()) {
 			checkCollision(player.getBullet(), player, currentScore, bunkers, enemyLayerBottom, enemyLayerMid, enemyLayerTop);
+		}
+		for (int i = enemyBullets.size() - 1; i >= 0; i--) {
+			checkEnemyBulletCollision(enemyBullets[i], bunkers, player, enemyBullets, i);
 		}
 
 		// UI
