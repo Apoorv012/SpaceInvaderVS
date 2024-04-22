@@ -3,6 +3,7 @@
 #include <SDL_image.h>
 
 #include "Math.hpp"
+#include "Text.hpp"
 
 class Entity
 {
@@ -44,3 +45,13 @@ public:
 	void clearBullet();
 };
 
+class Bunker : public Entity {
+	int health;
+	Text* healthText;
+	SDL_Renderer* _renderer;
+public:
+	Bunker(Vector2f p_pos, SDL_Texture* p_tex, Vector2f p_dim, SDL_Renderer* renderer);
+	void loseHealth();
+	int getHealth();
+	void showHealth();
+};

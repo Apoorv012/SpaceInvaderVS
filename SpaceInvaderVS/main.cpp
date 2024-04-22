@@ -13,10 +13,16 @@
 
 const int DIGITS_IN_SCORE = 5;
 
-bool checkCollision(Bullet* bullet, std::vector<Entity>& bunkers, std::vector<Entity>& lowerLevel, std::vector<Entity>& midLevel, std::vector<Entity>& upperLevel) {
+bool checkCollision(Bullet* bullet, Player& player, int& score, std::vector<Bunker>& bunkers, std::vector<Entity>& lowerLevel, std::vector<Entity>& midLevel, std::vector<Entity>& upperLevel) {
 	for (size_t i = 0; i < bunkers.size(); ++i) {
 		if (intersect(bullet->getRect(), bunkers[i].getRect())) {
 			std::cout << "Bunker " << i << " hit" << std::endl;
+			bunkers[i].loseHealth();
+
+			if (bunkers[i].getHealth() <= 0) {
+				bunkers.erase(bunkers.begin() + i);
+			}
+			player.clearBullet();
 			return true;
 		}
 	}
@@ -24,6 +30,9 @@ bool checkCollision(Bullet* bullet, std::vector<Entity>& bunkers, std::vector<En
 	for (size_t i = 0; i < lowerLevel.size(); ++i) {
 		if (intersect(bullet->getRect(), lowerLevel[i].getRect())) {
 			std::cout << "Lower level enemy " << i << " hit" << std::endl;
+			player.clearBullet();
+			lowerLevel.erase(lowerLevel.begin() + i);
+			score += 30;
 			return true;
 		}
 	}
@@ -31,6 +40,9 @@ bool checkCollision(Bullet* bullet, std::vector<Entity>& bunkers, std::vector<En
 	for (size_t i = 0; i < midLevel.size(); ++i) {
 		if (intersect(bullet->getRect(), midLevel[i].getRect())) {
 			std::cout << "Mid level enemy " << i << " hit" << std::endl;
+			player.clearBullet();
+			midLevel.erase(midLevel.begin() + i);
+			score += 60;
 			return true;
 		}
 	}
@@ -38,11 +50,12 @@ bool checkCollision(Bullet* bullet, std::vector<Entity>& bunkers, std::vector<En
 	for (size_t i = 0; i < upperLevel.size(); ++i) {
 		if (intersect(bullet->getRect(), upperLevel[i].getRect())) {
 			std::cout << "Top level enemy " << i << " hit" << std::endl;
+			player.clearBullet();
+			upperLevel.erase(upperLevel.begin() + i);
+			score += 100;
 			return true;
 		}
 	}
-
-
 
 	return false;
 }
@@ -77,12 +90,11 @@ int main(int argc, char* argv[])
 	SDL_Texture* enemyTexture_2 = window.loadTexture("res/gfx/Invader_02-1.png");
 	SDL_Texture* enemyTexture_3 = window.loadTexture("res/gfx/Invader_03-1.png");
 
-
-	std::vector<Entity> bunkers = {
-		Entity(Vector2f(92, 400), bunkerTexture, Vector2f(84, 64)),
-		Entity(Vector2f(270, 400), bunkerTexture, Vector2f(84, 64)),
-		Entity(Vector2f(448, 400), bunkerTexture, Vector2f(84, 64)),
-		Entity(Vector2f(626, 400), bunkerTexture, Vector2f(84, 64)),
+	std::vector<Bunker> bunkers = {
+		Bunker(Vector2f(92, 400), bunkerTexture, Vector2f(84, 64), window.getRenderer()),
+		Bunker(Vector2f(270, 400), bunkerTexture, Vector2f(84, 64), window.getRenderer()),
+		Bunker(Vector2f(448, 400), bunkerTexture, Vector2f(84, 64), window.getRenderer()),
+		Bunker(Vector2f(626, 400), bunkerTexture, Vector2f(84, 64), window.getRenderer()),
 	};
 
 	std::vector<Entity> playerLives = {
@@ -136,8 +148,9 @@ int main(int argc, char* argv[])
 		window.clear();
 
 		// Draw characters
-		for (Entity& e : bunkers) {
+		for (Bunker& e : bunkers) {
 			window.render(e);
+			e.showHealth();
 		}
 
 		for (Entity& e : playerLives) {
@@ -164,7 +177,7 @@ int main(int argc, char* argv[])
 
 		// Check Collision
 		if (player.getBullet()) {
-			checkCollision(player.getBullet(), bunkers, enemyLayerBottom, enemyLayerMid, enemyLayerTop);
+			checkCollision(player.getBullet(), player, currentScore, bunkers, enemyLayerBottom, enemyLayerMid, enemyLayerTop);
 		}
 
 		// UI

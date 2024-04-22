@@ -113,3 +113,25 @@ void Bullet::update()
 		_player->clearBullet();
 	}
 }
+
+Bunker::Bunker(Vector2f p_pos, SDL_Texture* p_tex, Vector2f p_dim, SDL_Renderer* renderer)
+	: Entity(p_pos, p_tex, p_dim), health(5), _renderer(renderer) {
+	healthText = new Text(_renderer, "res/fonts/space_invaders.ttf", 20, std::to_string(health), { 0, 0, 0, 255 });
+}
+
+void Bunker::loseHealth()
+{
+	health--;
+	delete healthText;
+	healthText = new Text(_renderer, "res/fonts/space_invaders.ttf", 20, std::to_string(health), { 0, 0, 0, 255 });
+}
+
+int Bunker::getHealth()
+{
+	return health;
+}
+
+void Bunker::showHealth()
+{
+	healthText->display(_renderer, pos.x + 36, pos.y + 10);
+}
