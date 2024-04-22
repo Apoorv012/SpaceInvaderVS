@@ -12,6 +12,7 @@ public:
 	Vector2f& getPos();
 	SDL_Texture* getTexture();
 	SDL_Rect getCurrentFrame();
+	SDL_Rect getRect();
 protected:
 	SDL_Rect _rect;
 	Vector2f pos;
@@ -22,10 +23,9 @@ protected:
 class Bullet : public Entity {
 	int speed;
 	class Player* _player;
-	SDL_Rect* rect;
 public:
 	Bullet(Vector2f p_pos, SDL_Texture* p_tex, Vector2f p_dim, int speed, Player* player);
-	SDL_Rect* getRect();
+	SDL_Rect* getRectPtr();
 	void update();
 };
 

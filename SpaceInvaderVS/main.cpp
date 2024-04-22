@@ -11,7 +11,41 @@
 #include "Utils.hpp"
 #include "Text.hpp"
 
-constexpr auto DIGITS_IN_SCORE = 5;
+const int DIGITS_IN_SCORE = 5;
+
+bool checkCollision(Bullet* bullet, std::vector<Entity>& bunkers, std::vector<Entity>& lowerLevel, std::vector<Entity>& midLevel, std::vector<Entity>& upperLevel) {
+	for (size_t i = 0; i < bunkers.size(); ++i) {
+		if (intersect(bullet->getRect(), bunkers[i].getRect())) {
+			std::cout << "Bunker " << i << " hit" << std::endl;
+			return true;
+		}
+	}
+
+	for (size_t i = 0; i < lowerLevel.size(); ++i) {
+		if (intersect(bullet->getRect(), lowerLevel[i].getRect())) {
+			std::cout << "Lower level enemy " << i << " hit" << std::endl;
+			return true;
+		}
+	}
+
+	for (size_t i = 0; i < midLevel.size(); ++i) {
+		if (intersect(bullet->getRect(), midLevel[i].getRect())) {
+			std::cout << "Mid level enemy " << i << " hit" << std::endl;
+			return true;
+		}
+	}
+
+	for (size_t i = 0; i < upperLevel.size(); ++i) {
+		if (intersect(bullet->getRect(), upperLevel[i].getRect())) {
+			std::cout << "Top level enemy " << i << " hit" << std::endl;
+			return true;
+		}
+	}
+
+
+
+	return false;
+}
 
 int main(int argc, char* argv[])
 {
@@ -129,9 +163,9 @@ int main(int argc, char* argv[])
 		player.update();
 
 		// Check Collision
-		/*if (player.getBullet()) {
-			checkCollision();
-		}*/
+		if (player.getBullet()) {
+			checkCollision(player.getBullet(), bunkers, enemyLayerBottom, enemyLayerMid, enemyLayerTop);
+		}
 
 		// UI
 		if (displayScore != currentScore) {
