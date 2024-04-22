@@ -53,7 +53,8 @@ void Player::moveX(int x)
 	if (pos.x > 730) {
 		pos.x -= x;
 	}
-	
+
+	_rect.x = pos.x;
 }
 
 void Player::shoot()
@@ -89,6 +90,12 @@ void Player::clearBullet()
 {
 	delete bullet;
 	bullet = nullptr;
+}
+
+void Player::newLife()
+{
+	pos.x = 20;
+	pos.y = 500;
 }
 
 Bullet::Bullet(Vector2f p_pos, SDL_Texture* p_tex, Vector2f p_dim, int speed, Player* player)

@@ -45,6 +45,7 @@ public:
 	void displayBullet(SDL_Renderer* renderer, SDL_Texture* _texture);
 	Bullet* getBullet();
 	void clearBullet();
+	void newLife();
 };
 
 class Bunker : public Entity {

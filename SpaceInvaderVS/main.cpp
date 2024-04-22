@@ -60,7 +60,7 @@ bool checkCollision(Bullet* bullet, Player& player, int& score, std::vector<Bunk
 	return false;
 }
 
-bool checkEnemyBulletCollision(Bullet* bullet, std::vector<Bunker>& bunkers, Player& player, std::vector<Bullet*>& enemyBullets, int index) {
+bool checkEnemyBulletCollision(Bullet* bullet, std::vector<Bunker>& bunkers, Player& player, std::vector<Bullet*>& enemyBullets, int index, std::vector<Entity>& playerLives) {
 	for (size_t i = 0; i < bunkers.size(); i++) {
 		if (intersect(bullet->getRect(), bunkers[i].getRect())) {
 			std::cout << "Bunker " << i << " hit" << std::endl;
@@ -74,6 +74,21 @@ bool checkEnemyBulletCollision(Bullet* bullet, std::vector<Bunker>& bunkers, Pla
 			delete bullet;
 			return true;
 		}
+	}
+
+	if (intersect(bullet->getRect(), player.getRect())) {
+		std::cout << "Player hit" << std::endl;
+		enemyBullets.erase(enemyBullets.begin() + index);
+		delete bullet;
+
+		if (playerLives.size() <= 0) {
+			std::cout << "GAME OVER!";
+			return 0;
+		}
+
+		player.newLife();
+		playerLives.pop_back();
+		return true;
 	}
 
 	return false;
@@ -210,7 +225,7 @@ int main(int argc, char* argv[])
 			checkCollision(player.getBullet(), player, currentScore, bunkers, enemyLayerBottom, enemyLayerMid, enemyLayerTop);
 		}
 		for (int i = enemyBullets.size() - 1; i >= 0; i--) {
-			checkEnemyBulletCollision(enemyBullets[i], bunkers, player, enemyBullets, i);
+			checkEnemyBulletCollision(enemyBullets[i], bunkers, player, enemyBullets, i, playerLives);
 		}
 
 		// UI
