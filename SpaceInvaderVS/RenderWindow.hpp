@@ -12,6 +12,7 @@ public:
 	void cleanUp();
 	void clear();
 	void render(Entity& p_entity);
+	void render(Entity* p_entity);
 	void renderUI();
 	void display();
 

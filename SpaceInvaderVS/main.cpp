@@ -11,7 +11,7 @@
 #include "Utils.hpp"
 #include "Text.hpp"
 
-#define DIGITS_IN_SCORE 5
+constexpr auto DIGITS_IN_SCORE = 5;
 
 int main(int argc, char* argv[])
 {
@@ -37,8 +37,14 @@ int main(int argc, char* argv[])
 
 	SDL_Texture* bunkerTexture = window.loadTexture("res/gfx/Bunker.png");
 	SDL_Texture* playerTexture = window.loadTexture("res/gfx/Player.png");
+	SDL_Texture* bulletTexture = window.loadTexture("res/gfx/Laser.png");
 
-	std::vector<Entity> entities = {
+	SDL_Texture* enemyTexture_1 = window.loadTexture("res/gfx/Invader_01-1.png");
+	SDL_Texture* enemyTexture_2 = window.loadTexture("res/gfx/Invader_02-1.png");
+	SDL_Texture* enemyTexture_3 = window.loadTexture("res/gfx/Invader_03-1.png");
+
+
+	std::vector<Entity> bunkers = {
 		Entity(Vector2f(92, 400), bunkerTexture, Vector2f(84, 64)),
 		Entity(Vector2f(270, 400), bunkerTexture, Vector2f(84, 64)),
 		Entity(Vector2f(448, 400), bunkerTexture, Vector2f(84, 64)),
@@ -49,6 +55,13 @@ int main(int argc, char* argv[])
 		Entity(Vector2f(10, 560), playerTexture, Vector2f(52, 32)),
 		Entity(Vector2f(72, 560), playerTexture, Vector2f(52, 32)),
 	};
+
+	std::vector<Entity> enemyLayerTop, enemyLayerMid, enemyLayerBottom;
+	for (int i = 0; i < 8; i++) {
+		enemyLayerTop.push_back(Entity(Vector2f(114 + i * 76, 120), enemyTexture_1, Vector2f(32, 32)));
+		enemyLayerMid.push_back(Entity(Vector2f(128 + i * 71, 180), enemyTexture_2, Vector2f(44, 32)));
+		enemyLayerBottom.push_back(Entity(Vector2f(114 + i * 75, 240), enemyTexture_3, Vector2f(48, 32)));
+	}
 
 	Player player(Vector2f(20, 500), playerTexture, Vector2f(52, 32));
 
@@ -69,11 +82,15 @@ int main(int argc, char* argv[])
 			case SDL_KEYDOWN:
 				switch (event.key.keysym.sym) {
 				case SDLK_LEFT:
+				case SDLK_a:
 					player.moveX(-10);
 					break;
+				case SDLK_d:
 				case SDLK_RIGHT:
 					player.moveX(10);
 					break;
+				case SDLK_SPACE:
+					player.shoot();
 				default:
 					break;
 				}
@@ -85,7 +102,7 @@ int main(int argc, char* argv[])
 		window.clear();
 
 		// Draw characters
-		for (Entity& e : entities) {
+		for (Entity& e : bunkers) {
 			window.render(e);
 		}
 
@@ -93,7 +110,28 @@ int main(int argc, char* argv[])
 			window.render(e);
 		}
 
+		for (Entity& e : enemyLayerTop) {
+			window.render(e);
+		}
+		for (Entity& e : enemyLayerMid) {
+			window.render(e);
+		}
+		for (Entity& e : enemyLayerBottom) {
+			window.render(e);
+		}
+
 		window.render(player);
+		if (player.getBullet()) {
+			player.displayBullet(window.getRenderer(), bulletTexture);
+		}
+
+		// Update
+		player.update();
+
+		// Check Collision
+		/*if (player.getBullet()) {
+			checkCollision();
+		}*/
 
 		// UI
 		if (displayScore != currentScore) {
