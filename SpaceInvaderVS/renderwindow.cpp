@@ -5,6 +5,7 @@
 
 #include "RenderWindow.hpp"
 #include "Entity.hpp"
+#include <SDL_mixer.h>
 
 RenderWindow::RenderWindow(const char* p_title, int p_w, int p_h)
 	: window(NULL), renderer(NULL)
@@ -93,5 +94,6 @@ void RenderWindow::cleanUp() {
 	TTF_Quit();
 	IMG_Quit();
 	SDL_Quit();
+	Mix_Quit();
 }
 

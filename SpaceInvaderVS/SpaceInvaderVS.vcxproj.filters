@@ -91,4 +91,18 @@
       <Filter>Resource Files</Filter>
     </Font>
   </ItemGroup>
+  <ItemGroup>
+    <Media Include="res\sfx\gun_shoot.mp3">
+      <Filter>Resource Files</Filter>
+    </Media>
+    <Media Include="res\sfx\hurt.mp3">
+      <Filter>Resource Files</Filter>
+    </Media>
+    <Media Include="res\sfx\laser_shoot.mp3">
+      <Filter>Resource Files</Filter>
+    </Media>
+    <Media Include="res\sfx\background.mp3">
+      <Filter>Resource Files</Filter>
+    </Media>
+  </ItemGroup>
 </Project>

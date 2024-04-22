@@ -3,6 +3,7 @@
 #include <SDL_image.h>
 
 #include "Math.hpp"
+#include <SDL_mixer.h>
 
 Entity::Entity(Vector2f p_pos, SDL_Texture* p_tex, Vector2f p_dim)
 	: pos(p_pos), tex(p_tex)
@@ -57,10 +58,11 @@ void Player::moveX(int x)
 	_rect.x = pos.x;
 }
 
-void Player::shoot()
+void Player::shoot(Mix_Chunk* shootingSound)
 {
 	if (bullet) return;
 
+	Mix_PlayChannel(1, shootingSound, 0);
 	bullet = new Bullet(Vector2f(pos.x + 24, pos.y), bulletTexture, Vector2f(4, 8), -7, this);
 }
 

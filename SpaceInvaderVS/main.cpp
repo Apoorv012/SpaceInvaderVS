@@ -1,9 +1,12 @@
 #include <SDL.h>
 #include <SDL_image.h>
 #include <SDL_ttf.h>
+#include <SDL_mixer.h>
 #include <iostream>
 #include <vector>
 #include <string>
+#include <ctime>
+#include <cstdlib>
 
 #include "RenderWindow.hpp"
 #include "Entity.hpp"
@@ -60,7 +63,7 @@ bool checkCollision(Bullet* bullet, Player& player, int& score, std::vector<Bunk
 	return false;
 }
 
-bool checkEnemyBulletCollision(Bullet* bullet, std::vector<Bunker>& bunkers, Player& player, std::vector<Bullet*>& enemyBullets, int index, std::vector<Entity>& playerLives) {
+bool checkEnemyBulletCollision(Bullet* bullet, std::vector<Bunker>& bunkers, Player& player, std::vector<Bullet*>& enemyBullets, int index, std::vector<Entity>& playerLives, bool& gameRunning) {
 	for (size_t i = 0; i < bunkers.size(); i++) {
 		if (intersect(bullet->getRect(), bunkers[i].getRect())) {
 			std::cout << "Bunker " << i << " hit" << std::endl;
@@ -82,8 +85,9 @@ bool checkEnemyBulletCollision(Bullet* bullet, std::vector<Bunker>& bunkers, Pla
 		delete bullet;
 
 		if (playerLives.size() <= 0) {
-			std::cout << "GAME OVER!";
-			return 0;
+			std::cout << "GAME OVER!" << std::endl;
+			gameRunning = false;
+			return true;
 		}
 
 		player.newLife();
@@ -99,10 +103,12 @@ int main(int argc, char* argv[])
 	const int FPS = 120;
 	const int frameDelay = 1000 / FPS;
 
+	std::srand(static_cast<unsigned int>(std::time(nullptr)));
+
 	Uint32 frameStart;
 	int frameTime;
 
-	if (SDL_Init(SDL_INIT_VIDEO) > 0) {
+	if (SDL_Init(SDL_INIT_VIDEO | SDL_INIT_AUDIO) < 0) {
 		std::cout << "SDL_Init HAS FAILED. SDL_ERROR: " << SDL_GetError() << std::endl;
 	}
 
@@ -112,6 +118,14 @@ int main(int argc, char* argv[])
 
 	if (TTF_Init() == -1) {
 		std::cout << "TTF_Init HAS FAILED. ERROR: " << SDL_GetError() << std::endl;
+	}
+
+	if (!Mix_Init(MIX_INIT_MP3)) {
+		std::cout << "Mix_Init HAS FAILED. ERROR: " << SDL_GetError() << std::endl;
+	}
+	
+	if (Mix_OpenAudio(44100, MIX_DEFAULT_FORMAT, 6, 4096) < 0) {
+		std::cout << "Mix_OpenAudio HAS FAILED. ERROR: " << Mix_GetError() << std::endl;
 	}
 
 	RenderWindow window("GAME v1.0", 800, 600);
@@ -124,6 +138,11 @@ int main(int argc, char* argv[])
 	SDL_Texture* enemyTexture_2 = window.loadTexture("res/gfx/Invader_02-1.png");
 	SDL_Texture* enemyTexture_3 = window.loadTexture("res/gfx/Invader_03-1.png");
 
+	Mix_Music* backgroundSound = Mix_LoadMUS("res/sfx/background.mp3");
+	Mix_PlayMusic(backgroundSound, 0);
+
+	Mix_Chunk* shootingSound = loadShootingSound("res/sfx/gun_shoot.mp3");
+
 	std::vector<Bunker> bunkers = {
 		Bunker(Vector2f(92, 400), bunkerTexture, Vector2f(84, 64), window.getRenderer()),
 		Bunker(Vector2f(270, 400), bunkerTexture, Vector2f(84, 64), window.getRenderer()),
@@ -131,10 +150,11 @@ int main(int argc, char* argv[])
 		Bunker(Vector2f(626, 400), bunkerTexture, Vector2f(84, 64), window.getRenderer()),
 	};
 
-	std::vector<Entity> playerLives = {
-		Entity(Vector2f(10, 560), playerTexture, Vector2f(52, 32)),
-		Entity(Vector2f(72, 560), playerTexture, Vector2f(52, 32)),
-	};
+	const int numOfLives = 4;
+	std::vector<Entity> playerLives;
+	for (int i = 0; i < numOfLives; ++i) {
+		playerLives.push_back(Entity(Vector2f(10 + 62 * i, 560), playerTexture, Vector2f(52, 32)));
+	}
 
 	std::vector<Enemy> enemyLayerTop, enemyLayerMid, enemyLayerBottom;
 	for (int i = 0; i < 8; i++) {
@@ -152,6 +172,8 @@ int main(int argc, char* argv[])
 
 	bool gameRunning = true;
 	SDL_Event event;
+	int timeBetweenShooting = 100;
+	int timeUntilShooting = timeBetweenShooting;
 
 	while (gameRunning) {
 		frameStart = SDL_GetTicks();
@@ -172,10 +194,19 @@ int main(int argc, char* argv[])
 					player.moveX(10);
 					break;
 				case SDLK_SPACE:
-					player.shoot();
+					player.shoot(shootingSound);
 					break;
-				case SDLK_x:
-					enemyLayerBottom[0].shoot(enemyBullets, bulletTexture);
+				//case SDLK_m:
+				//	Mix_PlayChannel(1, shootingSound, 0);
+				//	break;
+				case SDLK_p:
+					if (Mix_PausedMusic()) {
+						Mix_ResumeMusic();
+					}
+					else {
+						Mix_PauseMusic();
+					}
+					break;
 				default:
 					break;
 				}
@@ -219,13 +250,36 @@ int main(int argc, char* argv[])
 		for (auto el : enemyBullets) {
 			el->update(&enemyBullets);
 		}
+		if (timeUntilShooting-- < 0) {
+			if (enemyLayerBottom.size() > 0) {
+				int index = random(0, enemyLayerBottom.size() - 1);
+				enemyLayerBottom[index].shoot(enemyBullets, bulletTexture);
+				Mix_PlayChannel(1, shootingSound, 0);
+			}
+			else if (enemyLayerMid.size() > 0) {
+				int index = random(0, enemyLayerMid.size() - 1);
+				enemyLayerMid[index].shoot(enemyBullets, bulletTexture);
+				Mix_PlayChannel(1, shootingSound, 0);
+			}
+			else if (enemyLayerTop.size() > 0) {
+				int index = random(0, enemyLayerTop.size() - 1);
+				enemyLayerTop[index].shoot(enemyBullets, bulletTexture);
+				Mix_PlayChannel(1, shootingSound, 0);
+			}
+			else {
+				std::cout << "YOU WIN!" << std::endl;
+				gameRunning = false;
+			}
+			
+			timeUntilShooting += timeBetweenShooting;
+		}
 
 		// Check Collision
 		if (player.getBullet()) {
 			checkCollision(player.getBullet(), player, currentScore, bunkers, enemyLayerBottom, enemyLayerMid, enemyLayerTop);
 		}
 		for (int i = enemyBullets.size() - 1; i >= 0; i--) {
-			checkEnemyBulletCollision(enemyBullets[i], bunkers, player, enemyBullets, i, playerLives);
+			checkEnemyBulletCollision(enemyBullets[i], bunkers, player, enemyBullets, i, playerLives, gameRunning);
 		}
 
 		// UI
@@ -247,6 +301,7 @@ int main(int argc, char* argv[])
 		}
 	}
 
+	Mix_HaltMusic();
 	window.cleanUp();
 
 	return 0;

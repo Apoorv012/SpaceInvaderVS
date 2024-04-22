@@ -17,3 +17,15 @@ bool intersect(SDL_Rect rect1, SDL_Rect rect2) {
 		rect1.y < rect2.y + rect2.h &&
 		rect1.y + rect1.h > rect2.y);
 }
+
+int random(int min, int max) {
+	return min + std::rand() % (max - min + 1);
+}
+
+Mix_Chunk* loadShootingSound(const char* filename) {
+	Mix_Chunk* shootingSound = Mix_LoadWAV(filename);
+	if (!shootingSound) {
+		std::cerr << "Failed to load shooting sound: " << Mix_GetError() << std::endl;
+	}
+	return shootingSound;
+}

@@ -1,6 +1,7 @@
 #pragma once
 #include <SDL.h>
 #include <SDL_image.h>
+#include <SDL_mixer.h>
 #include <vector>
 
 #include "Math.hpp"
@@ -39,7 +40,7 @@ class Player : public Entity
 public:
 	Player(Vector2f p_pos, SDL_Texture* p_tex, Vector2f p_dim);
 	void moveX(int x);
-	void shoot();
+	void shoot(Mix_Chunk* shootingSound);
 	void setBulletTexture(SDL_Texture* bulletTex);
 	void update();
 	void displayBullet(SDL_Renderer* renderer, SDL_Texture* _texture);
