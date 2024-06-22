@@ -98,6 +98,9 @@ void Player::newLife()
 {
 	pos.x = 20;
 	pos.y = 500;
+
+	_rect.x = 20;
+	_rect.y = 500;
 }
 
 Bullet::Bullet(Vector2f p_pos, SDL_Texture* p_tex, Vector2f p_dim, int speed, Player* player)
