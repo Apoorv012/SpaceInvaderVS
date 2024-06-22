@@ -119,6 +119,9 @@ SDL_Event event;
 int timeBetweenShooting = 100;
 int timeUntilShooting = timeBetweenShooting;
 
+// Game State
+int state = 1; // 0: Home, 1: Game, 2: End
+
 
 
 // For checking the collision between the player's bullet with bunker and enemies
@@ -281,6 +284,9 @@ int main(int argc, char* argv[])
 	// text for the score of player
 	scoreText = new Text(window.getRenderer(), "res/fonts/space_invaders.ttf", 30, getScoreString(currentScore, DIGITS_IN_SCORE), {0, 0, 255, 255});
 
+	// 0: no, 1: right, -1: left
+	int playerMoveState = 0;
+	int playerMoveSpeed = 5;
 
 
 	// Main game loop
@@ -296,18 +302,19 @@ int main(int argc, char* argv[])
 				switch (event.key.keysym.sym) {
 				case SDLK_LEFT:
 				case SDLK_a:
-					player.moveX(-10);
+					playerMoveState = -1;
 					break;
 				case SDLK_d:
 				case SDLK_RIGHT:
-					player.moveX(10);
+					playerMoveState = 1;
 					break;
 				case SDLK_SPACE:
 					player.shoot(gunSound);
 					break;
-				//case SDLK_m:
+				case SDLK_m:
+					//state = (state + 1) % 3;
 				//	Mix_PlayChannel(1, shootingSound, 0);
-				//	break;
+					break;
 				case SDLK_p:
 					if (Mix_PausedMusic()) {
 						Mix_ResumeMusic();
@@ -320,98 +327,121 @@ int main(int argc, char* argv[])
 					break;
 				}
 				break;
+
+			case SDL_KEYUP:
+				switch (event.key.keysym.sym) {
+				case SDLK_LEFT:
+				case SDLK_a:
+					playerMoveState = 0;
+					break;
+				case SDLK_d:
+				case SDLK_RIGHT:
+					playerMoveState = 0;
+					break;
+				default:
+					break;
+				}
+				break;
 			}
 		}
 
 		// Clear the window
 		window.clear();
 
-		// Draw characters
-		for (Bunker& e : bunkers) {
-			window.render(e);
-			e.showHealth();
-		}
-
-		for (Entity& e : playerLives) {
-			window.render(e);
-		}
-
-		for (Entity* e : enemyLayerTop) {
-			if (e == nullptr) {
-				continue;
+		if (state == 1) {
+			// Move player
+			if (playerMoveState != 0) {
+				player.moveX(playerMoveSpeed * playerMoveState);
 			}
-			window.render(*e);
-		}
-		for (Entity* e : enemyLayerMid) {
-			if (e == nullptr) {
-				continue;
-			}
-			window.render(*e);
-		}
-		for (Entity* e : enemyLayerBottom) {
-			if (e == nullptr) {
-				continue;
-			}
-			window.render(*e);
-		}
 
-		window.render(player);
-		if (player.getBullet()) {
-			player.displayBullet(window.getRenderer(), bulletTexture);
-		}
-		for (auto el : enemyBullets) {
-			el->display(window.getRenderer(), bulletTexture);
-		}
-
-		// Update
-		player.update();
-		for (auto el : enemyBullets) {
-			el->update(&enemyBullets);
-		}
-		if (timeUntilShooting-- < 0) {
-			if (enemyLayerTop.size() <= 0) {
-				std::cout << "YOU WIN!" << std::endl;
-				gameRunning = false;
+			// Draw characters
+			for (Bunker& e : bunkers) {
+				window.render(e);
+				e.showHealth();
 			}
-			else {
-				int index = random(0, enemyLayerTop.size() - 1);
-				if (enemyLayerMid[index] != nullptr) {
-					// middle row enemy exists
-					if (enemyLayerBottom[index] != nullptr) {
-						enemyLayerBottom[index]->shoot(enemyBullets, bulletTexture);
-					}
-					// either middle row would shoot, or bottom row
-					else {
-						enemyLayerMid[index]->shoot(enemyBullets, bulletTexture);
-					}
+
+			for (Entity& e : playerLives) {
+				window.render(e);
+			}
+
+			for (Entity* e : enemyLayerTop) {
+				if (e == nullptr) {
+					continue;
+				}
+				window.render(*e);
+			}
+			for (Entity* e : enemyLayerMid) {
+				if (e == nullptr) {
+					continue;
+				}
+				window.render(*e);
+			}
+			for (Entity* e : enemyLayerBottom) {
+				if (e == nullptr) {
+					continue;
+				}
+				window.render(*e);
+			}
+
+			window.render(player);
+			if (player.getBullet()) {
+				player.displayBullet(window.getRenderer(), bulletTexture);
+			}
+			for (auto el : enemyBullets) {
+				el->display(window.getRenderer(), bulletTexture);
+			}
+
+			// Update
+			player.update();
+			for (auto el : enemyBullets) {
+				el->update(&enemyBullets);
+			}
+			if (timeUntilShooting-- < 0) {
+				if (enemyLayerTop.size() <= 0) {
+					std::cout << "YOU WIN!" << std::endl;
+					gameRunning = false;
 				}
 				else {
-					// top row shoots
-					enemyLayerTop[index]->shoot(enemyBullets, bulletTexture);
+					int index = random(0, enemyLayerTop.size() - 1);
+					if (enemyLayerMid[index] != nullptr) {
+						// middle row enemy exists
+						if (enemyLayerBottom[index] != nullptr) {
+							enemyLayerBottom[index]->shoot(enemyBullets, bulletTexture);
+						}
+						// either middle row would shoot, or bottom row
+						else {
+							enemyLayerMid[index]->shoot(enemyBullets, bulletTexture);
+						}
+					}
+					else {
+						// top row shoots
+						enemyLayerTop[index]->shoot(enemyBullets, bulletTexture);
+					}
+					Mix_PlayChannel(2, gunSound, 0);
 				}
-				Mix_PlayChannel(2, gunSound, 0);
+
+				timeUntilShooting += timeBetweenShooting;
 			}
+
+			// Check Collision
+			if (player.getBullet()) {
+				checkCollision();
+			}
+			checkAllEnemyBulletCollision();
+
+			// UI
+			if (displayScore != currentScore) {
+				delete scoreText;
+				scoreText = new Text(window.getRenderer(), "res/fonts/space_invaders.ttf", 30, getScoreString(currentScore, DIGITS_IN_SCORE), { 0, 0, 255, 255 });
+				displayScore = currentScore;
+			}
+			scoreText->display(window.getRenderer(), 10, 10);
 			
-			timeUntilShooting += timeBetweenShooting;
-		}
+			window.renderUI();
 
-		// Check Collision
-		if (player.getBullet()) {
-			checkCollision();
+			// Display
+			window.display();
 		}
-		checkAllEnemyBulletCollision();
-
-		// UI
-		if (displayScore != currentScore) {
-			delete scoreText;
-			scoreText = new Text(window.getRenderer(), "res/fonts/space_invaders.ttf", 30, getScoreString(currentScore, DIGITS_IN_SCORE), { 0, 0, 255, 255 });
-			displayScore = currentScore;
-		}
-		scoreText->display(window.getRenderer(), 10, 10);
-		window.renderUI();
-
-		// Display
-		window.display();
 
 		frameTime = SDL_GetTicks() - frameStart;
 
