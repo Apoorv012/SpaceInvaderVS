@@ -58,6 +58,8 @@ void RenderWindow::render(Entity& p_entity) {
 	SDL_RenderCopy(renderer, p_entity.getTexture(), &src, &dst);
 }
 
+
+
 void RenderWindow::render(Entity* p_entity)
 {
 	if (p_entity) {
@@ -76,6 +78,11 @@ void RenderWindow::render(Entity* p_entity)
 
 		SDL_RenderCopy(renderer, p_entity->getTexture(), &src, &dst);
 	}
+}
+
+void RenderWindow::renderImage(SDL_Texture* imageTexture, SDL_Rect* imageRect)
+{
+	SDL_RenderCopy(renderer, imageTexture, NULL, imageRect);
 }
 
 void RenderWindow::renderUI() {

@@ -13,6 +13,7 @@ public:
 	void clear();
 	void render(Entity& p_entity);
 	void render(Entity* p_entity);
+	void renderImage(SDL_Texture* imageTexture, SDL_Rect* imageRect);
 	void renderUI();
 	void display();
 

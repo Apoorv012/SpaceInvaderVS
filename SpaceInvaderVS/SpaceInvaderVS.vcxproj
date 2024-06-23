@@ -133,6 +133,7 @@
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
+    <ClInclude Include="Button.hpp" />
     <ClInclude Include="Entity.hpp" />
     <ClInclude Include="Math.hpp" />
     <ClInclude Include="RenderWindow.hpp" />
@@ -142,6 +143,7 @@
   </ItemGroup>
   <ItemGroup>
     <Image Include="res\gfx\Bunker.png" />
+    <Image Include="res\gfx\HomeScreen BG.png" />
     <Image Include="res\gfx\Invader_01-1.png" />
     <Image Include="res\gfx\Invader_01-2.png" />
     <Image Include="res\gfx\Invader_02-1.png" />
@@ -155,6 +157,7 @@
     <Image Include="res\gfx\Splat.png" />
   </ItemGroup>
   <ItemGroup>
+    <ClCompile Include="button.cpp" />
     <ClCompile Include="entity.cpp" />
     <ClCompile Include="main.cpp" />
     <ClCompile Include="renderwindow.cpp" />
@@ -162,6 +165,7 @@
   </ItemGroup>
   <ItemGroup>
     <Font Include="res\fonts\space_invaders.ttf" />
+    <Font Include="res\fonts\trispace-semibold.ttf" />
   </ItemGroup>
   <ItemGroup>
     <Media Include="res\sfx\background.mp3" />

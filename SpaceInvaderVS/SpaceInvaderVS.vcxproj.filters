@@ -33,6 +33,9 @@
     <ClInclude Include="Utils.hpp">
       <Filter>Header Files</Filter>
     </ClInclude>
+    <ClInclude Include="Button.hpp">
+      <Filter>Header Files</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <Image Include="res\gfx\Bunker.png">
@@ -71,6 +74,9 @@
     <Image Include="res\gfx\Splat.png">
       <Filter>Resource Files</Filter>
     </Image>
+    <Image Include="res\gfx\HomeScreen BG.png">
+      <Filter>Resource Files</Filter>
+    </Image>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="entity.cpp">
@@ -85,9 +91,15 @@
     <ClCompile Include="Text.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
+    <ClCompile Include="button.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <Font Include="res\fonts\space_invaders.ttf">
+      <Filter>Resource Files</Filter>
+    </Font>
+    <Font Include="res\fonts\trispace-semibold.ttf">
       <Filter>Resource Files</Filter>
     </Font>
   </ItemGroup>
