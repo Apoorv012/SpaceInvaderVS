@@ -77,6 +77,12 @@
     <Image Include="res\gfx\HomeScreen BG.png">
       <Filter>Resource Files</Filter>
     </Image>
+    <Image Include="res\gfx\EndScreenLost BG.png">
+      <Filter>Resource Files</Filter>
+    </Image>
+    <Image Include="res\gfx\EndScreenWon BG.png">
+      <Filter>Resource Files</Filter>
+    </Image>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="entity.cpp">

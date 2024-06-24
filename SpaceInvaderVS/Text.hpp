@@ -11,6 +11,7 @@ public:
 
 private:
 	SDL_Texture* _textTexture = nullptr;
+public:
 	mutable SDL_Rect _textRect;
 
 };

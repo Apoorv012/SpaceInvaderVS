@@ -47,7 +47,7 @@ bool SDLinit = init();
 
 
 // Sets the FPS and duration for a particular frame according to the FPS
-const int FPS = 120;
+const int FPS = 60;
 const int frameDelay = 1000 / FPS;
 
 // Shows the number of digits in the scoreboard, like 0020
@@ -60,10 +60,12 @@ Uint32 frameStart;
 int frameTime;
 
 // MainWindow
-RenderWindow window("GAME v1.0", 800, 600);
+RenderWindow window("Space Invader by Apoorv Mittal", 800, 600);
 
-// HomeScreen BG
+// BG
 SDL_Texture* homeScreenTexture = window.loadTexture("res/gfx/HomeScreen BG.png");
+SDL_Texture* endScreenWonTexture = window.loadTexture("res/gfx/EndScreenWon BG.png");
+SDL_Texture* endScreenLostTexture = window.loadTexture("res/gfx/EndScreenLost BG.png");
 
 // Textures
 SDL_Texture* bunkerTexture = window.loadTexture("res/gfx/Bunker.png");
@@ -119,15 +121,18 @@ Text* scoreText;
 // Game variables
 bool gameRunning = true;
 SDL_Event event;
-const int timeBetweenShooting = 100;
+const int timeBetweenShooting = 60;
 int timeUntilShooting = timeBetweenShooting;
 
 // Game State
 int state = 0; // 0: Home, 1: Game, 2: End
+bool hasWon = false;
 
 // 0: no, 1: right, -1: left
-int playerMoveState = 0;
-const int playerMoveSpeed = 5;
+//int playerMoveState = 0;
+bool playerMoveRight = false;
+bool playerMoveLeft = false;
+const int playerMoveSpeed = 3;
 
 // Mouse Events
 bool mouseClicked = false;
@@ -162,6 +167,15 @@ bool checkCollision() {
 			//enemyLayerBottom.erase(enemyLayerBottom.begin() + i);
 			delete enemyLayerBottom[i];
 			enemyLayerBottom[i] = nullptr;
+
+			if (enemyLayerBottom[i] == nullptr && enemyLayerMid[i] == nullptr && enemyLayerTop[i] == nullptr)
+			{
+				// remove the whole column
+				enemyLayerBottom.erase(enemyLayerBottom.begin() + i);
+				enemyLayerMid.erase(enemyLayerMid.begin() + i);
+				enemyLayerTop.erase(enemyLayerTop.begin() + i);
+			}
+
 			currentScore += 30;
 			Mix_PlayChannel(3, hurtSound, 0);
 			return true;
@@ -176,6 +190,15 @@ bool checkCollision() {
 			//enemyLayerMid.erase(enemyLayerMid.begin() + i);
 			delete enemyLayerMid[i];
 			enemyLayerMid[i] = nullptr;
+
+			if (enemyLayerBottom[i] == nullptr && enemyLayerMid[i] == nullptr && enemyLayerTop[i] == nullptr)
+			{
+				// remove the whole column
+				enemyLayerBottom.erase(enemyLayerBottom.begin() + i);
+				enemyLayerMid.erase(enemyLayerMid.begin() + i);
+				enemyLayerTop.erase(enemyLayerTop.begin() + i);
+			}
+
 			currentScore += 60;
 			Mix_PlayChannel(3, hurtSound, 0);
 			return true;
@@ -191,10 +214,13 @@ bool checkCollision() {
 			delete enemyLayerTop[i];
 			enemyLayerTop[i] = nullptr;
 
-			// remove the whole column
-			enemyLayerBottom.erase(enemyLayerBottom.begin() + i);
-			enemyLayerMid.erase(enemyLayerMid.begin() + i);
-			enemyLayerTop.erase(enemyLayerTop.begin() + i);
+			if (enemyLayerBottom[i] == nullptr && enemyLayerMid[i] == nullptr && enemyLayerTop[i] == nullptr)
+			{
+				// remove the whole column
+				enemyLayerBottom.erase(enemyLayerBottom.begin() + i);
+				enemyLayerMid.erase(enemyLayerMid.begin() + i);
+				enemyLayerTop.erase(enemyLayerTop.begin() + i);
+			}
 
 			currentScore += 100;
 			Mix_PlayChannel(3, hurtSound, 0);
@@ -239,7 +265,8 @@ bool checkEnemyBulletCollision(int index) {
 
 		if (playerLives.size() <= 0) {
 			std::cout << "GAME OVER!" << std::endl;
-			gameRunning = false;
+			state = 2;
+			hasWon = false;
 			return true;
 		}
 
@@ -309,13 +336,110 @@ void HomeScreen() {
 }
 
 
+
+// Reset variables
+void reset() {
+	// Clear the vectors
+	bunkers.clear();
+	playerLives.clear();
+	enemyLayerTop.clear();
+	enemyLayerMid.clear();
+	enemyLayerBottom.clear();
+
+	// Populate the vectors
+	for (int i = 0; i < 4; i++) {
+		bunkers.push_back(Bunker(Vector2f(92 + 178 * i, 400), bunkerTexture, Vector2f(84, 64), window.getRenderer()));
+	};
+
+	for (int i = 0; i < numOfLives; ++i) {
+		playerLives.push_back(Entity(Vector2f(10 + 62 * i, 560), playerTexture, Vector2f(52, 32)));
+	}
+
+	for (int i = 0; i < 8; i++) {
+		enemyLayerTop.push_back(new Enemy(Vector2f(136 + i * 71, 120), enemyTexture_1, Vector2f(32, 32)));
+		enemyLayerMid.push_back(new Enemy(Vector2f(128 + i * 71, 180), enemyTexture_2, Vector2f(44, 32)));
+		enemyLayerBottom.push_back(new Enemy(Vector2f(114 + i * 75, 240), enemyTexture_3, Vector2f(48, 32)));
+	}
+
+
+	currentScore = 0;
+
+	player.newLife();
+	player.clearBullet();
+
+
+	window.clear();
+}
+
+
+
+// End Screen Consts
+SDL_Rect endScreenRect = { 0, 0, 800, 600 };
+Text* gameWonTitle, * gameWonTitleShadow, * gameLostTitle, * gameLostTitleShadow;
+Button endExitButton({ 308, 380, 184, 65 }, { 352, 392 }, "EXIT", "res/fonts/Trispace-SemiBold.ttf", 36, { 0, 195, 8, 255 }, { 255, 255, 255, 255 });
+Button replayButton({ 308, 290, 184, 65 }, { 332, 300 }, "REPLAY", "res/fonts/Trispace-SemiBold.ttf", 36, { 0, 195, 8, 255 }, { 255, 255, 255, 255 });
+
+
+void EndScreen() {
+	// Clear the window
+	window.clear();
+
+	// Update
+	if (mouseClicked) {
+		mouseClicked = false;
+
+		if (endExitButton.getIsActive()) {
+			gameRunning = false;
+			return;
+		}
+
+		if (replayButton.getIsActive()) {
+			state = 1;
+			reset();
+			return;
+		}
+	}
+
+	replayButton.update(window.getRenderer(), mouseX, mouseY);
+	endExitButton.update(window.getRenderer(), mouseX, mouseY);
+
+	if (hasWon) {
+		window.renderImage(endScreenWonTexture, &endScreenRect);
+
+		gameWonTitleShadow->display(window.getRenderer(), 241, 56);
+		gameWonTitle->display(window.getRenderer(), 236, 51);
+	}
+	else {
+		window.renderImage(endScreenLostTexture, &endScreenRect);
+
+		gameLostTitle->display(window.getRenderer(), 222, 56);
+		gameLostTitleShadow->display(window.getRenderer(), 217, 51);
+	}
+
+	scoreText->display(window.getRenderer(), 288, 172);
+
+	madeByText->display(window.getRenderer(), 188, 520);
+
+	replayButton.display(window.getRenderer());
+	endExitButton.display(window.getRenderer());
+
+	SDL_SetRenderDrawColor(window.getRenderer(), 255, 255, 255, 255);
+	SDL_RenderDrawLine(window.getRenderer(), 180, 560, 620, 560);
+
+}
+
+
+
 void GameScreen() {
 	// Clear the window
 	window.clear();
 
 	// Move player
-	if (playerMoveState != 0) {
-		player.moveX(playerMoveSpeed * playerMoveState);
+	if (playerMoveRight && !playerMoveLeft) {
+		player.moveX(playerMoveSpeed);
+	}
+	else if (!playerMoveRight && playerMoveLeft) {
+		player.moveX(-playerMoveSpeed);
 	}
 
 	// Draw characters
@@ -363,23 +487,18 @@ void GameScreen() {
 	if (timeUntilShooting-- < 0) {
 		if (enemyLayerTop.size() <= 0) {
 			std::cout << "YOU WIN!" << std::endl;
-			//gameRunning = false;
-			state = 0;
+			state = 2; // End Screen
+			hasWon = true;
 		}
 		else {
 			int index = random(0, enemyLayerTop.size() - 1);
-			if (enemyLayerMid[index] != nullptr) {
-				// middle row enemy exists
-				if (enemyLayerBottom[index] != nullptr) {
-					enemyLayerBottom[index]->shoot(enemyBullets, bulletTexture);
-				}
-				// either middle row would shoot, or bottom row
-				else {
-					enemyLayerMid[index]->shoot(enemyBullets, bulletTexture);
-				}
+			if (enemyLayerBottom[index] != nullptr) {
+				enemyLayerBottom[index]->shoot(enemyBullets, bulletTexture);
+			}
+			else if (enemyLayerMid[index] != nullptr) {
+				enemyLayerMid[index]->shoot(enemyBullets, bulletTexture);
 			}
 			else {
-				// top row shoots
 				enemyLayerTop[index]->shoot(enemyBullets, bulletTexture);
 			}
 			Mix_PlayChannel(2, gunSound, 0);
@@ -438,6 +557,10 @@ int main(int argc, char* argv[])
 	scoreText = new Text(window.getRenderer(), "res/fonts/space_invaders.ttf", 30, getScoreString(currentScore, DIGITS_IN_SCORE), {0, 0, 255, 255});
 	gameTitle = new Text(window.getRenderer(), "res/fonts/Trispace-SemiBold.ttf", 77, "Space Invader", { 225, 207, 51, 255 });
 	gameTitleShadow = new Text(window.getRenderer(), "res/fonts/Trispace-SemiBold.ttf", 77, "Space Invader", { 101, 0, 110, 255 });
+	gameWonTitle = new Text(window.getRenderer(), "res/fonts/Trispace-SemiBold.ttf", 76, "You Win", { 225, 207, 51, 255 });
+	gameWonTitleShadow = new Text(window.getRenderer(), "res/fonts/Trispace-SemiBold.ttf", 76, "You Win", { 101, 0, 110, 255 });
+	gameLostTitle = new Text(window.getRenderer(), "res/fonts/Trispace-SemiBold.ttf", 76, "You Lost", { 225, 207, 51, 255 });
+	gameLostTitleShadow = new Text(window.getRenderer(), "res/fonts/Trispace-SemiBold.ttf", 76, "You Lost", { 101, 0, 110, 255 });
 	madeByText = new Text(window.getRenderer(), "res/fonts/Trispace-SemiBold.ttf", 32, "Made By Apoorv Mittal", { 76, 191, 255, 255 });
 
 	// Clear the window
@@ -456,11 +579,11 @@ int main(int argc, char* argv[])
 				switch (event.key.keysym.sym) {
 				case SDLK_LEFT:
 				case SDLK_a:
-					playerMoveState = -1;
+					playerMoveLeft = true;
 					break;
 				case SDLK_d:
 				case SDLK_RIGHT:
-					playerMoveState = 1;
+					playerMoveRight = true;
 					break;
 				case SDLK_SPACE:
 					if (state == 1) {
@@ -468,8 +591,10 @@ int main(int argc, char* argv[])
 					}
 					break;
 				case SDLK_m:
-					state = (state + 1) % 3;
-				//	Mix_PlayChannel(1, shootingSound, 0);
+					// Just for debugging
+					
+					//state = (state + 1) % 3;
+					//Mix_PlayChannel(1, shootingSound, 0);
 					break;
 				case SDLK_p:
 					if (Mix_PausedMusic()) {
@@ -488,11 +613,11 @@ int main(int argc, char* argv[])
 				switch (event.key.keysym.sym) {
 				case SDLK_LEFT:
 				case SDLK_a:
-					playerMoveState = 0;
+					playerMoveLeft = false;
 					break;
 				case SDLK_d:
 				case SDLK_RIGHT:
-					playerMoveState = 0;
+					playerMoveRight = false;
 					break;
 				default:
 					break;
@@ -529,6 +654,7 @@ int main(int argc, char* argv[])
 		
 		
 		case 2: // End Screen
+			EndScreen();
 			break;
 		}
 
